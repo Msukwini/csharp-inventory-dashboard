@@ -1,0 +1,80 @@
+@model IEnumerable<inventory_dashboard.Models.Product>
+@{
+    ViewData["Title"] = "Products";
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+}
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <h2 class="font-display text-3xl font-bold">📦 Products</h2>
+    <div class="flex items-center gap-3">
+        <span class="px-3 py-1 rounded-full bg-[#132B44] text-sm">Total: @ViewBag.TotalProducts</span>
+        <span class="px-3 py-1 rounded-full bg-[#132B44] text-[#D4A373] text-sm">⚠️ Low Stock: @ViewBag.LowStockCount</span>
+        <a href="/Product/Create" class="btn-primary">+ Add Product</a>
+    </div>
+</div>
+
+<!-- Search / Filter -->
+<div class="card mb-8">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="form-group">
+            <label>Search (Name/SKU)</label>
+            <input type="text" name="searchTerm" class="form-control" placeholder="e.g. Coffee" value="@ViewBag.CurrentSearchTerm" />
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select name="category" class="form-control">
+                <option value="">All Categories</option>
+                @foreach (var cat in categories)
+                {
+                    <option value="@cat" selected="@(ViewBag.CurrentCategory == cat ? "selected" : null)">@cat</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Min Stock</label>
+            <input type="number" name="minStock" class="form-control" placeholder="e.g. 5" value="@ViewBag.CurrentMinStock" />
+        </div>
+        <div class="form-group">
+            <label>Max Stock</label>
+            <input type="number" name="maxStock" class="form-control" placeholder="e.g. 20" value="@ViewBag.CurrentMaxStock" />
+        </div>
+        <div class="flex items-end gap-2">
+            <button type="submit" class="btn-primary">🔍 Filter</button>
+            <a href="/Product" class="btn-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+<!-- Product Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @foreach (var product in Model)
+    {
+        <div class="card hover:border-[#D4A373]/40 transition-all">
+            <div class="flex justify-between items-start">
+                <h3 class="font-display text-xl font-semibold">@product.Name</h3>
+                @if (product.StockQuantity <= 10)
+                {
+                    <span class="badge-low-stock">⚠️ LOW</span>
+                }
+            </div>
+            <p class="text-[#A0B4C8] text-sm mt-1">@product.Description</p>
+            <div class="mt-3 flex justify-between items-center">
+                <span class="font-display text-2xl font-bold text-[#D4A373]">R @product.Price</span>
+                <span class="text-sm">Stock: <strong>@product.StockQuantity</strong></span>
+            </div>
+            <div class="mt-4 flex gap-2">
+                <a href="/Product/Details/@product.Id" class="text-sm text-[#A0B4C8] hover:text-[#F8F6F0]">View</a>
+                <a href="/Product/Edit/@product.Id" class="text-sm text-[#D4A373] hover:text-[#E8C99B]">Edit</a>
+                <a href="/Product/Delete/@product.Id" class="text-sm text-red-400 hover:text-red-300">Delete</a>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card text-center py-12 mt-8">
+        <p class="text-[#A0B4C8] text-lg">No products found matching your criteria.</p>
+        <a href="/Product" class="btn-primary mt-4 inline-block">Clear Filters</a>
+    </div>
+}

@@ -1,0 +1,50 @@
+@model inventory_dashboard.Models.Order
+@{
+    ViewData["Title"] = "Delete Order";
+}
+
+@if (Model.Status == "Approved")
+{
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            ❌ This order is approved and cannot be deleted.
+        </div>
+        <a href="/Order/Details/@Model.Id" class="btn-secondary">🔙 Back to Details</a>
+    </div>
+    return;
+}
+
+<div class="max-w-2xl mx-auto">
+    <h2 class="text-3xl font-bold text-red-600 mb-6">🗑️ Delete Order #@Model.Id</h2>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card bg-red-50 border border-red-200">
+        <p class="text-lg text-gray-800 mb-4">Are you sure you want to delete this order?</p>
+
+        <dl class="grid grid-cols-2 gap-4">
+            <dt class="font-semibold">Order ID</dt>
+            <dd>#@Model.Id</dd>
+            <dt class="font-semibold">Date</dt>
+            <dd>@Model.OrderDate.ToString("yyyy-MM-dd")</dd>
+            <dt class="font-semibold">Total</dt>
+            <dd>R @Model.TotalAmount</dd>
+            <dt class="font-semibold">Status</dt>
+            <dd>@Model.Status</dd>
+        </dl>
+
+        <form asp-action="Delete" class="mt-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div class="flex gap-2">
+                <button type="submit" class="btn-danger">Yes, Delete</button>
+                <a href="/Order/Details/@Model.Id" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

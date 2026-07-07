@@ -1,0 +1,73 @@
+@model IEnumerable<inventory_dashboard.Models.Order>
+@{
+    ViewData["Title"] = "Orders";
+}
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <h2 class="font-display text-3xl font-bold">📋 Orders</h2>
+    <a href="/Order/Create" class="btn-primary">+ New Order</a>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>#@order.Id</td>
+                    <td>@order.OrderDate.ToString("yyyy-MM-dd")</td>
+                    <td>R @order.TotalAmount</td>
+                    <td>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium
+                            @(order.Status == "Approved" ? "bg-[#2A9D8F]/20 text-[#2A9D8F]" :
+                              order.Status == "Rejected" ? "bg-[#EF4444]/20 text-[#EF4444]" :
+                              order.Status == "Pending" ? "bg-[#D4A373]/20 text-[#D4A373]" :
+                              "bg-[#A0B4C8]/20 text-[#A0B4C8]")">
+                            @order.Status
+                        </span>
+                    </td>
+                    <td>
+                        <a href="/Order/Details/@order.Id" class="text-[#A0B4C8] hover:text-[#F8F6F0] text-sm">View</a>
+                        @{
+                            var hoursSinceCreation = (DateTime.UtcNow - order.CreatedAt).TotalHours;
+                            var canEdit = hoursSinceCreation <= 1 && order.Status != "Approved";
+                            var canDelete = order.Status != "Approved";
+                        }
+                        @if (canEdit)
+                        {
+                            <a href="/Order/Edit/@order.Id" class="text-[#D4A373] hover:text-[#E8C99B] text-sm ml-3">Edit</a>
+                        }
+                        else
+                        {
+                            <span class="text-[#A0B4C8] text-sm ml-3 opacity-50" title="Editing expired">⏰</span>
+                        }
+                        @if (canDelete)
+                        {
+                            <a href="/Order/Delete/@order.Id" class="text-red-400 hover:text-red-300 text-sm ml-3">Delete</a>
+                        }
+                        else
+                        {
+                            <span class="text-[#A0B4C8] text-sm ml-3 opacity-50" title="Cannot delete approved">🚫</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card text-center py-12 mt-8">
+        <p class="text-[#A0B4C8] text-lg">No orders yet.</p>
+        <a href="/Order/Create" class="btn-primary mt-4 inline-block">Create First Order</a>
+    </div>
+}

@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="login-container">
+    <!-- Left: Brand & Live Stat -->
+    <div class="login-brand">
+        <div class="brand-header">
+            <span class="brand-icon">📦</span>
+            <h1 class="brand-title">Inventory<br>Dashboard</h1>
+        </div>
+        <div class="live-stat">
+            <span class="stat-number" id="liveStat">0</span>
+            <span class="stat-label">items in stock</span>
+            <div class="stat-pulse"></div>
+        </div>
+        <p class="brand-tagline">Real‑time inventory at your fingertips</p>
+    </div>
+
+    <!-- Right: Login Card -->
+    <div class="login-card">
+        <div class="card-header">
+            <h2>Welcome Back</h2>
+            <p>Sign in to access your dashboard</p>
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="login-error">
+                @ViewBag.Error
+            </div>
+        }
+
+        <form method="post" asp-action="Index" data-no-spinner>
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="admin" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-login">Sign In →</button>
+        </form>
+
+        <div class="login-footer">
+            <span>Demo: admin / Admin123!</span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const target = 1247;
+            const el = document.getElementById('liveStat');
+            let current = 0;
+            const increment = Math.ceil(target / 60);
+            const interval = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(interval);
+                }
+                el.textContent = current.toLocaleString();
+            }, 30);
+        });
+    </script>
+}

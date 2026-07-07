@@ -1,0 +1,27 @@
+@model inventory_dashboard.Models.Product
+@{ ViewData["Title"] = "Product Details"; }
+<div class="max-w-2xl mx-auto">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">📄 Product Details</h2>
+    <div class="card">
+        <dl class="grid grid-cols-2 gap-4">
+            <dt class="font-semibold">Name</dt>
+            <dd>@Model.Name</dd>
+            <dt class="font-semibold">Description</dt>
+            <dd>@Model.Description</dd>
+            <dt class="font-semibold">SKU</dt>
+            <dd>@Model.SKU</dd>
+            <dt class="font-semibold">Category</dt>
+            <dd>@Model.Category</dd>
+            <dt class="font-semibold">Price</dt>
+            <dd>R @Model.Price</dd>
+            <dt class="font-semibold">Stock Quantity</dt>
+            <dd>@Model.StockQuantity</dd>
+            <dt class="font-semibold">Created</dt>
+            <dd>@Model.CreatedAt</dd>
+        </dl>
+        <div class="flex gap-2 mt-4">
+            <a href="/Product/Edit/@Model.Id" class="btn-primary">Edit</a>
+            <a href="/Product" class="btn-secondary">Back to List</a>
+        </div>
+    </div>
+</div>

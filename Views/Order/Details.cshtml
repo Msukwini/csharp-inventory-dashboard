@@ -1,0 +1,138 @@
+@model inventory_dashboard.Models.Order
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="max-w-4xl mx-auto">
+    <h2 class="font-display text-3xl font-bold mb-6">📋 Order #@Model.Id</h2>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="bg-red-500/20 border border-red-500/30 text-red-200 px-4 py-3 rounded mb-4">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card mb-8">
+        <dl class="grid grid-cols-2 gap-4 text-sm">
+            <dt class="text-[#A0B4C8]">Customer ID</dt>
+            <dd>@Model.CustomerId</dd>
+            <dt class="text-[#A0B4C8]">Order Date</dt>
+            <dd>@Model.OrderDate.ToString("yyyy-MM-dd HH:mm")</dd>
+            <dt class="text-[#A0B4C8]">Status</dt>
+            <dd>
+                <span class="px-3 py-1 rounded-full text-sm font-medium
+                    @(Model.Status == "Approved" ? "bg-[#2A9D8F]/20 text-[#2A9D8F]" :
+                      Model.Status == "Rejected" ? "bg-[#EF4444]/20 text-[#EF4444]" :
+                      Model.Status == "Pending" ? "bg-[#D4A373]/20 text-[#D4A373]" :
+                      "bg-[#A0B4C8]/20 text-[#A0B4C8]")">
+                    @Model.Status
+                </span>
+            </dd>
+            <dt class="text-[#A0B4C8]">Total Amount</dt>
+            <dd class="font-display text-2xl font-bold text-[#D4A373]">R @Model.TotalAmount</dd>
+            <dt class="text-[#A0B4C8]">Notes</dt>
+            <dd>@(string.IsNullOrEmpty(Model.Notes) ? "—" : Model.Notes)</dd>
+            <dt class="text-[#A0B4C8]">Purchase Request</dt>
+            <dd>@(string.IsNullOrEmpty(Model.PurchaseRequestNotes) ? "—" : Model.PurchaseRequestNotes)</dd>
+            <dt class="text-[#A0B4C8]">Created At</dt>
+            <dd>@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+            <dt class="text-[#A0B4C8]">Last Updated</dt>
+            <dd>@Model.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+        </dl>
+    </div>
+
+    <h3 class="font-display text-2xl font-semibold mb-4">📦 Order Items</h3>
+    @if (Model.OrderItems != null && Model.OrderItems.Any())
+    {
+        <div class="table-container mb-8">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.OrderItems)
+                    {
+                        <tr>
+                            <td>@item.Product?.Name</td>
+                            <td>@item.Quantity</td>
+                            <td>R @item.Price</td>
+                            <td>R@(item.Price * item.Quantity)</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" class="text-right">Total</th>
+                        <th class="text-[#D4A373]">R @Model.TotalAmount</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-[#A0B4C8]">No items in this order.</p>
+    }
+
+    <div class="flex flex-wrap gap-3 mt-6">
+        @if (Model.Status == "Pending")
+        {
+            <form asp-action="Approve" asp-route-id="@Model.Id" method="post" style="display:inline;" id="approveForm">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-primary">✅ Approve</button>
+            </form>
+            <form asp-action="Reject" asp-route-id="@Model.Id" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-danger">❌ Reject</button>
+            </form>
+        }
+
+        @{
+            var hoursSinceCreation = (DateTime.UtcNow - Model.CreatedAt).TotalHours;
+            var canEdit = hoursSinceCreation <= 1 && Model.Status != "Approved";
+            var canDelete = Model.Status != "Approved";
+        }
+
+        @if (canEdit)
+        {
+            <a href="/Order/Edit/@Model.Id" class="btn-secondary">✏️ Edit</a>
+        }
+        else
+        {
+            <span class="btn-secondary opacity-50 cursor-not-allowed" title="Editing disabled">✏️ Edit (expired)</span>
+        }
+
+        @if (canDelete)
+        {
+            <a href="/Order/Delete/@Model.Id" class="btn-danger">🗑️ Delete</a>
+        }
+        else
+        {
+            <span class="btn-danger opacity-50 cursor-not-allowed" title="Cannot delete approved">🗑️ Delete (disabled)</span>
+        }
+
+        <a href="/Order/DownloadInvoice/@Model.Id" class="btn-primary" style="background:#3B82F6;">📄 Download Invoice</a>
+        <a href="/Order" class="btn-secondary">🔙 Back to List</a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const approveForm = document.getElementById('approveForm');
+        if (approveForm) {
+            approveForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (typeof fireConfetti === 'function') fireConfetti();
+                else confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                setTimeout(() => { this.submit(); }, 500);
+            });
+        }
+    </script>
+}

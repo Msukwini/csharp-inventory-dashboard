@@ -1,0 +1,109 @@
+@model DashboardData
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="mb-8">
+    <h1 class="font-display text-4xl font-bold text-[#F8F6F0]">
+        Welcome back, <span class="text-[#D4A373]">@Context.Session.GetString("Username")</span> 👋
+    </h1>
+    <p class="text-[#A0B4C8] mt-1 text-lg">
+        Today is <span id="liveClock" class="font-medium text-[#F8F6F0]"></span>
+    </p>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <span class="text-sm uppercase tracking-wider text-[#A0B4C8]">Total Products</span>
+            <span class="text-2xl">📦</span>
+        </div>
+        <p class="font-display text-4xl font-bold text-[#F8F6F0] mt-2">@Model.TotalProducts</p>
+    </div>
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <span class="text-sm uppercase tracking-wider text-[#A0B4C8]">Low Stock</span>
+            <span class="text-2xl">⚠️</span>
+        </div>
+        <p class="font-display text-4xl font-bold text-[#D4A373] mt-2">@Model.LowStockCount</p>
+    </div>
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <span class="text-sm uppercase tracking-wider text-[#A0B4C8]">Pending Orders</span>
+            <span class="text-2xl">📋</span>
+        </div>
+        <p class="font-display text-4xl font-bold text-[#2A9D8F] mt-2">@Model.PendingOrders</p>
+    </div>
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <span class="text-sm uppercase tracking-wider text-[#A0B4C8]">Stock Value</span>
+            <span class="text-2xl">💰</span>
+        </div>
+        <p class="font-display text-4xl font-bold text-[#F8F6F0] mt-2">R @Model.StockValue</p>
+    </div>
+</div>
+
+<!-- Extra row for Order Revenue -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <span class="text-sm uppercase tracking-wider text-[#A0B4C8]">Order Revenue</span>
+            <span class="text-2xl">💵</span>
+        </div>
+        <p class="font-display text-4xl font-bold text-[#D4A373] mt-2">R @Model.OrderRevenue</p>
+    </div>
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <span class="text-sm uppercase tracking-wider text-[#A0B4C8]">Total Items</span>
+            <span class="text-2xl">📊</span>
+        </div>
+        <p class="font-display text-4xl font-bold text-[#F8F6F0] mt-2">@Model.TotalProducts</p>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card">
+    <h3 class="font-display text-2xl font-semibold mb-4">Weekly Orders</h3>
+    <canvas id="ordersChart" height="100"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('liveClock').textContent = now.toLocaleString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    const ctx = document.getElementById('ordersChart').getContext('2d');
+    const weeklyData = @Html.Raw(Json.Serialize(Model.WeeklyOrders));
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(weeklyData),
+            datasets: [{
+                label: 'Orders',
+                data: Object.values(weeklyData),
+                backgroundColor: 'rgba(212, 163, 115, 0.7)',
+                borderColor: '#D4A373',
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#A0B4C8' } }
+            },
+            scales: {
+                y: { beginAtZero: true, stepSize: 1, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - Inventory Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/site.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+</head>
+<body class="bg-[#0B1A2E] text-[#F8F6F0] font-sans antialiased">
+    @{
+        var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+        var isLoginPage = controller == "Login";
+    }
+    @if (!isLoginPage)
+    {
+        <!-- Top Navbar (hidden on Login) -->
+        <nav class="bg-[#0B1A2E] border-b border-[#1A2F3F] px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">📦</span>
+                <span class="font-display text-2xl font-bold text-[#D4A373] tracking-tight">Inventory</span>
+                <span class="font-display text-2xl font-bold text-[#F8F6F0]">Dashboard</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="/" class="text-sm font-medium hover:text-[#D4A373] transition">Home</a>
+                <a href="/Product" class="text-sm font-medium hover:text-[#D4A373] transition">Products</a>
+                <a href="/Product/LowStock" class="text-sm font-medium hover:text-[#D4A373] transition">Low Stock</a>
+                <a href="/Order" class="text-sm font-medium hover:text-[#D4A373] transition">Orders</a>
+                <button id="darkModeToggle" class="text-xl hover:scale-110 transition" title="Toggle Dark Mode">🌙</button>
+                @{
+                    var username = Context.Session.GetString("Username");
+                }
+                @if (!string.IsNullOrEmpty(username))
+                {
+                    <span class="text-sm text-[#A0B4C8]">@username</span>
+                    <a href="/Login/Logout" class="text-sm font-medium text-[#EF4444] hover:text-red-300 transition">Logout</a>
+                }
+                else
+                {
+                    <a href="/Login" class="text-sm font-medium hover:text-[#D4A373] transition">Login</a>
+                }
+            </div>
+        </nav>
+    }
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8 max-w-7xl">
+        @RenderBody()
+    </main>
+
+    <!-- Toast Notifications (same as before) -->
+    <div id="alertToast" class="alert-toast" style="background-color:#F59E0B; color:#1F2937; display:none;">
+        <strong>⚠️ Low Stock Alert!</strong>
+        <p id="alertMessage">Product is running low!</p>
+    </div>
+    <div id="messageToast" class="alert-toast" style="display:none;">
+        <strong id="messageTitle"></strong>
+        <p id="messageContent"></p>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner-box">
+            <div class="spinner"></div>
+            <p class="mt-4 text-[#F8F6F0]">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        // === SignalR Low Stock ===
+        const connection = new signalR.HubConnectionBuilder().withUrl("/stockHub").build();
+        connection.on("ReceiveAlert", (productName, stock) => {
+            const toast = document.getElementById("alertToast");
+            const message = document.getElementById("alertMessage");
+            message.textContent = `${productName} is low on stock! Only ${stock} left.`;
+            toast.style.display = "block";
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = 800;
+                gainNode.gain.value = 0.3;
+                oscillator.start();
+                setTimeout(() => oscillator.stop(), 300);
+            } catch(e) {}
+            setTimeout(() => { toast.style.display = "none"; }, 5000);
+        });
+        connection.start().catch(err => console.error(err));
+
+        // === Light / Dark Toggle ===
+        const toggle = document.getElementById('darkModeToggle');
+        if (toggle) {
+            toggle.addEventListener('click', function() {
+                document.body.classList.toggle('light-mode');
+                this.textContent = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
+                localStorage.setItem('lightMode', document.body.classList.contains('light-mode'));
+            });
+            if (localStorage.getItem('lightMode') === 'true') {
+                document.body.classList.add('light-mode');
+                toggle.textContent = '🌙';
+            }
+        }
+
+        // === Toast Helper ===
+        function showMessage(title, message, type = 'success') {
+            const toast = document.getElementById('messageToast');
+            const titleEl = document.getElementById('messageTitle');
+            const contentEl = document.getElementById('messageContent');
+            toast.className = 'alert-toast ' + type;
+            toast.style.display = 'block';
+            titleEl.textContent = title;
+            contentEl.textContent = message;
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        }
+
+        // === Loading Spinner (skip login form) ===
+        document.querySelectorAll('form:not([data-no-spinner])').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (this.checkValidity && !this.checkValidity()) return;
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            });
+        });
+
+        // === Confetti Global ===
+        window.fireConfetti = function() {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        };
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
