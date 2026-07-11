@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("csharp-inventory-dashboard")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c4a8ec910e02c5c996a0ffc23c39dfc51ebf624f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d1d733625a9a878e29b2a24b4b3b863b006a30e1")]
 [assembly: System.Reflection.AssemblyProductAttribute("csharp-inventory-dashboard")]
 [assembly: System.Reflection.AssemblyTitleAttribute("csharp-inventory-dashboard")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

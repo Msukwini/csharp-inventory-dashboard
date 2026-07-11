@@ -3,48 +3,31 @@
     ViewData["Title"] = "Low Stock";
 }
 
-<h2 class="text-3xl font-bold text-gray-800 mb-6">⚠️ Low Stock Products</h2>
+<h2 style="margin-bottom: 0.25rem;">Low Stock</h2>
+<p style="color: var(--muted-fg); margin-bottom: 1.5rem;">@Model.Count() products with 10 or fewer units remaining</p>
 
-@if (ViewBag.TotalProducts == 0)
-{
-    <div class="card text-center py-12">
-        <p class="text-gray-600 text-lg mb-4">No products in inventory yet.</p>
-        <a href="/Product/Create" class="btn-primary">Add Your First Product</a>
-    </div>
-}
-else if (!Model.Any())
-{
-    <div class="card text-center py-12">
-        <p class="text-gray-600 text-lg">✅ All products are well-stocked!</p>
-        <a href="/Product" class="btn-primary inline-block mt-4">Back to Products</a>
-    </div>
-}
-else
-{
-    <div class="card table-container">
-        <table>
-            <thead>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in Model)
+            {
                 <tr>
-                    <th>Name</th>
-                    <th>SKU</th>
-                    <th>Stock</th>
-                    <th>Actions</th>
+                    <td><strong>@product.Name</strong></td>
+                    <td>@product.Category</td>
+                    <td>@product.StockQuantity left</td>
+                    <td>R @product.Price.ToString("N2")</td>
+                    <td><a href="/Product/Restock/@product.Id" class="btn-primary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">Restock</a></td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach (var product in Model)
-                {
-                    <tr>
-                        <td>@product.Name</td>
-                        <td>@product.SKU</td>
-                        <td><span class="badge-low-stock">@product.StockQuantity</span></td>
-                        <td>
-                            <a href="/Product/Restock/@product.Id" class="text-emerald-600 hover:underline">Restock</a>
-                            <a href="/Product/Edit/@product.Id" class="text-blue-600 hover:underline ml-2">Edit All</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+            }
+        </tbody>
+    </table>
+</div>

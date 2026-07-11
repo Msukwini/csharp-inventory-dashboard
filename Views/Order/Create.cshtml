@@ -3,32 +3,37 @@
     ViewData["Title"] = "Create Order";
     var products = ViewBag.Products as IEnumerable<inventory_dashboard.Models.Product> ?? new List<inventory_dashboard.Models.Product>();
 }
-<div class="max-w-4xl mx-auto">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">📋 Create New Order</h2>
-    <div class="card">
-        <form asp-action="Create" id="orderForm">
-            @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            <!-- CustomerId (can be enhanced later) -->
+<div style="max-width: 700px; margin: 0 auto;">
+    <a href="/Order" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block;">← Back</a>
+    <h2 style="margin-bottom: 1.5rem;">Create Order</h2>
+
+    <form asp-action="Create" id="orderForm">
+        @Html.AntiForgeryToken()
+
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-family: var(--font-body); font-weight: 600; font-size: 1rem; margin-bottom: 0.75rem;">Order Details</h3>
             <div class="form-group">
-                <label asp-for="CustomerId"></label>
-                <input asp-for="CustomerId" class="form-control" type="number" value="1" />
-                <span asp-validation-for="CustomerId" class="text-danger"></span>
+                <label asp-for="CustomerId">Customer ID</label>
+                <input asp-for="CustomerId" class="form-control" value="1" type="number" />
             </div>
+            <div class="form-group">
+                <label asp-for="Notes">Notes</label>
+                <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Special instructions..."></textarea>
+            </div>
+        </div>
 
-            <hr class="my-4" />
-
-            <h3 class="text-xl font-semibold">📦 Items from Stock</h3>
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-family: var(--font-body); font-weight: 600; font-size: 1rem; margin-bottom: 0.75rem;">Products</h3>
             <div id="orderItems">
-                <div class="item-row grid grid-cols-4 gap-4 items-end mb-2">
+                <div class="item-row grid grid-cols-3 gap-4 items-end mb-2">
                     <div class="form-group">
                         <label>Product</label>
                         <select name="items[0].ProductId" class="form-control product-select">
                             <option value="">-- Select --</option>
                             @foreach (var p in products)
                             {
-                                <option value="@p.Id" data-price="@p.Price">@p.Name (Stock: @p.StockQuantity)</option>
+                                <option value="@p.Id" data-price="@p.Price">@p.Name</option>
                             }
                         </select>
                     </div>
@@ -40,51 +45,38 @@
                         <label>Price (snapshot)</label>
                         <input type="number" name="items[0].Price" class="form-control price" step="0.01" value="0" readonly />
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="line-total text-lg font-bold">R.00</span>
-                        <button type="button" class="btn-danger remove-row" style="padding: 0.2rem 0.6rem; font-size: 0.8rem;">✕</button>
-                    </div>
                 </div>
             </div>
-            <button type="button" id="addRow" class="btn-secondary mb-4">+ Add Another Product</button>
-
-            <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-                <div class="flex justify-between text-xl font-bold">
-                    <span>Grand Total:</span>
-                    <span id="grandTotal">R.00</span>
-                </div>
+            <button type="button" id="addRow" class="btn-secondary" style="padding: 0.3rem 0.8rem;">+ Add row</button>
+            <div style="margin-top: 1rem; font-size: 1.2rem; font-weight: 600;">
+                Grand Total: <span id="grandTotal">R 0.00</span>
             </div>
+        </div>
 
-            <hr class="my-4" />
-
-            <!-- Purchase Request for items not in stock -->
-            <h3 class="text-xl font-semibold">🛒 Product Not in Stock? Request Purchase</h3>
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-family: var(--font-body); font-weight: 600; font-size: 1rem; margin-bottom: 0.75rem;">Purchase Request</h3>
+            <p style="font-size: 0.85rem; color: var(--muted-fg); margin-bottom: 0.5rem;">For items not in stock — note to order from supplier.</p>
             <div class="grid grid-cols-3 gap-4">
                 <div class="form-group">
                     <label>Product Name</label>
-                    <input type="text" id="otherProductName" name="otherProductName" class="form-control" placeholder="e.g., Stapler" />
+                    <input type="text" id="otherProductName" name="otherProductName" class="form-control" placeholder="e.g. Stapler" />
                 </div>
                 <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" id="otherProductQty" name="otherProductQuantity" class="form-control" min="1" placeholder="10" />
+                    <input type="number" id="otherProductQty" name="otherProductQuantity" class="form-control" placeholder="10" />
                 </div>
                 <div class="form-group">
                     <label>Estimated Price</label>
                     <input type="number" id="otherProductPrice" name="otherProductPrice" class="form-control" step="0.01" placeholder="25.00" />
                 </div>
             </div>
+        </div>
 
-            <div class="form-group">
-                <label>Order Notes</label>
-                <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
-            </div>
-
-            <div class="flex gap-2 mt-4">
-                <button type="submit" class="btn-primary">Create Order</button>
-                <a href="/Order" class="btn-secondary">Cancel</a>
-            </div>
-        </form>
-    </div>
+        <div class="flex gap-2">
+            <button type="submit" class="btn-primary">Create Order</button>
+            <a href="/Order" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
@@ -97,29 +89,15 @@
             const container = document.getElementById('orderItems');
             const newRow = container.firstElementChild.cloneNode(true);
             // Update names
-            const selects = newRow.querySelectorAll('select, input');
-            selects.forEach(el => {
+            newRow.querySelectorAll('select, input').forEach(el => {
                 const name = el.getAttribute('name');
                 if (name) {
                     el.setAttribute('name', name.replace(/\[\d+\]/, `[${rowIndex}]`));
                 }
-                if (el.classList.contains('product-select')) {
-                    el.value = '';
-                }
-                if (el.classList.contains('qty')) {
-                    el.value = 1;
-                }
-                if (el.classList.contains('price')) {
-                    el.value = 0;
-                    el.readOnly = true;
-                }
-                if (el.type === 'number' && el.name.includes('Price')) {
-                    el.value = 0;
-                }
+                if (el.classList.contains('product-select')) el.value = '';
+                if (el.classList.contains('qty')) el.value = 1;
+                if (el.classList.contains('price')) el.value = 0;
             });
-            // Reset line total
-            const lineTotal = newRow.querySelector('.line-total');
-            if (lineTotal) lineTotal.textContent = 'R.00';
             container.appendChild(newRow);
             rowIndex++;
             attachRowEvents(newRow);
@@ -130,9 +108,6 @@
             const select = row.querySelector('.product-select');
             const qty = row.querySelector('.qty');
             const price = row.querySelector('.price');
-            const lineTotal = row.querySelector('.line-total');
-
-            // When product selected, auto-fill price
             select.addEventListener('change', function() {
                 const selected = this.options[this.selectedIndex];
                 if (selected && selected.dataset.price) {
@@ -140,52 +115,21 @@
                 } else {
                     price.value = '';
                 }
-                updateLineTotal(row);
                 updateGrandTotal();
             });
-
-            qty.addEventListener('input', function() {
-                updateLineTotal(row);
-                updateGrandTotal();
-            });
-
-            price.addEventListener('input', function() {
-                updateLineTotal(row);
-                updateGrandTotal();
-            });
-
-            // Remove row
-            const removeBtn = row.querySelector('.remove-row');
-            if (removeBtn) {
-                removeBtn.addEventListener('click', function() {
-                    if (document.querySelectorAll('.item-row').length > 1) {
-                        row.remove();
-                        updateGrandTotal();
-                    } else {
-                        alert('You need at least one item row.');
-                    }
-                });
-            }
-        }
-
-        function updateLineTotal(row) {
-            const qty = parseFloat(row.querySelector('.qty').value) || 0;
-            const price = parseFloat(row.querySelector('.price').value) || 0;
-            const total = qty * price;
-            row.querySelector('.line-total').textContent = '$' + total.toFixed(2);
+            qty.addEventListener('input', updateGrandTotal);
+            price.addEventListener('input', updateGrandTotal);
         }
 
         function updateGrandTotal() {
             const rows = document.querySelectorAll('.item-row');
-            let grand = 0;
+            let total = 0;
             rows.forEach(row => {
-                const line = row.querySelector('.line-total');
-                if (line) {
-                    const val = parseFloat(line.textContent.replace('$', ''));
-                    if (!isNaN(val)) grand += val;
-                }
+                const qty = parseFloat(row.querySelector('.qty').value) || 0;
+                const price = parseFloat(row.querySelector('.price').value) || 0;
+                total += qty * price;
             });
-            document.getElementById('grandTotal').textContent = '$' + grand.toFixed(2);
+            document.getElementById('grandTotal').textContent = 'R ' + total.toFixed(2);
         }
 
         // Attach events to initial row

@@ -52,8 +52,9 @@
 
 @section Scripts {
     <script>
+        // Animated inventory counter
         document.addEventListener('DOMContentLoaded', function() {
-            const target = 1247;
+            const target = 1247; // This could be fetched from API
             const el = document.getElementById('liveStat');
             let current = 0;
             const increment = Math.ceil(target / 60);
