@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: inventory-dashboard
+    runtime: docker
+    repo: https://github.com/Msukwini/csharp-inventory-dashboard
+    plan: starter
+    region: oregon
+    dockerCommand: dotnet csharp-inventory-dashboard.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: DATABASE_URL
+        sync: false  # Set manually in Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: PORT
+        value: 5000
