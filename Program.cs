@@ -1,20 +1,17 @@
-using Npgsql;
 using Microsoft.EntityFrameworkCore;
 using inventory_dashboard.Data;
 using inventory_dashboard.Repositories;
 using inventory_dashboard.Hubs;
 using inventory_dashboard.Models;
 using inventory_dashboard.Services;
+using System.Text.RegularExpressions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Remove all configuration sources (so it never looks for appsettings.json)
+// Remove all configuration sources
 builder.Configuration.Sources.Clear();
 
-// Add services to the container
 builder.Services.AddControllersWithViews();
-
-// --- Add Session Support ---
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -23,16 +20,43 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// --- Database Configuration: PostgreSQL (production) or SQLite (local) ---
-// Priority: 1. NEON_INVENTORY_DB  2. DATABASE_URL  3. SQLite fallback
-var connectionString = Environment.GetEnvironmentVariable("NEON_INVENTORY_DB")
-                       ?? Environment.GetEnvironmentVariable("DATABASE_URL")
-                       ?? builder.Configuration.GetConnectionString("DefaultConnection")
-                       ?? "Data Source=inventory.db";
+// --- Database Configuration with URI support ---
+string connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
+                          ?? Environment.GetEnvironmentVariable("NEON_INVENTORY_DB")
+                          ?? builder.Configuration.GetConnectionString("DefaultConnection")
+                          ?? "Data Source=inventory.db";
+
+Console.WriteLine($"📦 Raw connection string: {connectionString}");
+
+// If it's a PostgreSQL URI, convert it to a standard connection string
+if (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://"))
+{
+    Console.WriteLine("🔄 Converting PostgreSQL URI to ADO.NET format...");
+    try
+    {
+        var uri = new Uri(connectionString);
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+        var userInfo = uri.UserInfo.Split(':');
+        var username = userInfo[0];
+        var password = userInfo.Length > 1 ? userInfo[1] : "";
+
+        // Build standard connection string
+        connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+        Console.WriteLine($"✅ Converted connection string: {connectionString}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Failed to parse PostgreSQL URI: {ex.Message}");
+        // Fallback to SQLite
+        connectionString = "Data Source=inventory.db";
+    }
+}
 
 Console.WriteLine($"📦 Using database: {(connectionString.Contains("postgres") ? "PostgreSQL (Neon)" : "SQLite")}");
 
-if (connectionString.Contains("postgres") || connectionString.Contains("postgresql"))
+if (connectionString.Contains("postgres") || connectionString.Contains("Host="))
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(connectionString));
@@ -43,23 +67,18 @@ else
         options.UseSqlite(connectionString));
 }
 
-// --- Dependency Injection (Factory Pattern) ---
+// --- Dependency Injection ---
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<INoteRepository, NoteRepository>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
-
-// --- HttpContextAccessor for audit trail (to get current user) ---
 builder.Services.AddHttpContextAccessor();
-
-// --- SignalR for real-time alerts ---
 builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -69,7 +88,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
 app.UseSession();
 app.UseAuthorization();
 
@@ -79,14 +97,22 @@ app.MapControllerRoute(
 
 app.MapHub<StockHub>("/stockHub");
 
-// --- Create database and seed data ---
+// --- Database Initialization ---
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
-    Console.WriteLine("✅ Database created/verified.");
+    try
+    {
+        dbContext.Database.EnsureCreated();
+        Console.WriteLine("✅ Database created/verified.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Database creation failed: {ex.Message}");
+        throw;
+    }
 
-    // --- Seed Customers ---
+    // Seeding logic (unchanged)...
     if (!dbContext.Customers.Any())
     {
         dbContext.Customers.AddRange(
@@ -99,7 +125,6 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("✅ Customers seeded.");
     }
 
-    // --- Seed Products ---
     if (!dbContext.Products.Any())
     {
         dbContext.Products.AddRange(
@@ -116,7 +141,6 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("✅ Products seeded.");
     }
 
-    // --- Seed Orders ---
     if (!dbContext.Orders.Any())
     {
         var coffee = dbContext.Products.First(p => p.SKU == "BEV-001");
@@ -127,40 +151,13 @@ using (var scope = app.Services.CreateScope())
         var today = DateTime.UtcNow.Date;
 
         dbContext.Orders.AddRange(
-            new Order {
-                CustomerId = 42, Status = "Approved", TotalAmount = 795.00m,
-                OrderDate = today.AddDays(-3), CreatedAt = today.AddDays(-3),
-                OrderItems = new List<OrderItem> {
-                    new OrderItem { ProductId = coffee.Id, Quantity = 3, Price = coffee.Price },
-                    new OrderItem { ProductId = coldBrew.Id, Quantity = 2, Price = coldBrew.Price }
-                }
-            },
-            new Order {
-                CustomerId = 17, Status = "Pending", TotalAmount = 685.00m,
-                OrderDate = today.AddDays(-2), CreatedAt = today.AddDays(-2),
-                OrderItems = new List<OrderItem> {
-                    new OrderItem { ProductId = coldBrew.Id, Quantity = 2, Price = coldBrew.Price },
-                    new OrderItem { ProductId = toast.Id, Quantity = 5, Price = toast.Price }
-                }
-            },
-            new Order {
-                CustomerId = 89, Status = "Rejected", TotalAmount = 950.00m,
-                OrderDate = today.AddDays(-2), CreatedAt = today.AddDays(-2),
-                OrderItems = new List<OrderItem> {
-                    new OrderItem { ProductId = chai.Id, Quantity = 10, Price = chai.Price }
-                }
-            },
-            new Order {
-                CustomerId = 33, Status = "Pending", TotalAmount = 788.00m,
-                OrderDate = today.AddDays(-1), CreatedAt = today.AddDays(-1),
-                OrderItems = new List<OrderItem> {
-                    new OrderItem { ProductId = granola.Id, Quantity = 6, Price = granola.Price },
-                    new OrderItem { ProductId = toast.Id, Quantity = 4, Price = toast.Price }
-                }
-            }
+            new Order { CustomerId = 42, Status = "Approved", TotalAmount = 795.00m, OrderDate = today.AddDays(-3), CreatedAt = today.AddDays(-3), OrderItems = new List<OrderItem> { new OrderItem { ProductId = coffee.Id, Quantity = 3, Price = coffee.Price }, new OrderItem { ProductId = coldBrew.Id, Quantity = 2, Price = coldBrew.Price } } },
+            new Order { CustomerId = 17, Status = "Pending", TotalAmount = 685.00m, OrderDate = today.AddDays(-2), CreatedAt = today.AddDays(-2), OrderItems = new List<OrderItem> { new OrderItem { ProductId = coldBrew.Id, Quantity = 2, Price = coldBrew.Price }, new OrderItem { ProductId = toast.Id, Quantity = 5, Price = toast.Price } } },
+            new Order { CustomerId = 89, Status = "Rejected", TotalAmount = 950.00m, OrderDate = today.AddDays(-2), CreatedAt = today.AddDays(-2), OrderItems = new List<OrderItem> { new OrderItem { ProductId = chai.Id, Quantity = 10, Price = chai.Price } } },
+            new Order { CustomerId = 33, Status = "Pending", TotalAmount = 788.00m, OrderDate = today.AddDays(-1), CreatedAt = today.AddDays(-1), OrderItems = new List<OrderItem> { new OrderItem { ProductId = granola.Id, Quantity = 6, Price = granola.Price }, new OrderItem { ProductId = toast.Id, Quantity = 4, Price = toast.Price } } }
         );
         dbContext.SaveChanges();
-        Console.WriteLine("✅ Orders seeded (ORD-001 to ORD-004).");
+        Console.WriteLine("✅ Orders seeded.");
     }
 }
 
