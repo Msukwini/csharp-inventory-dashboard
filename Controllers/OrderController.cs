@@ -47,6 +47,20 @@ public class OrderController : BaseController
         return View();
     }
 
+    public async Task<IActionResult> ExportCsv()
+    {
+        var orders = await _orderRepo.GetAllAsync();
+        var csv = "OrderId,CustomerId,Date,Total,Status,Items\n";
+        foreach (var o in orders)
+        {
+            var itemCount = o.OrderItems?.Count ?? 0;
+            csv += $"{o.Id},{o.CustomerId},{o.OrderDate:yyyy-MM-dd},{o.TotalAmount},{o.Status},{itemCount}\n";
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
+        return File(bytes, "text/csv", $"Orders_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
     // POST: /Order/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -179,36 +193,44 @@ public class OrderController : BaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(int id)
     {
-        if (!IsAdmin())
-        {
-            TempData["ErrorMessage"] = "You must be logged in as Admin to approve orders.";
-            return RedirectToAction("Login", "Login");
-        }
-
         var order = await _orderRepo.GetByIdAsync(id);
         if (order == null) return NotFound();
 
-        foreach (var item in order.OrderItems)
+         if (order.Status != "Pending")
         {
-            var product = await _productRepo.GetByIdAsync(item.ProductId);
-            if (product != null)
+             TempData["ErrorMessage"] = "Only pending orders can be approved.";
+             return RedirectToAction(nameof(Details), new { id });
+        }
+
+         foreach (var item in order.OrderItems)
+        {
+             var product = await _productRepo.GetByIdAsync(item.ProductId);
+             if (product != null)
             {
-                if (product.StockQuantity < item.Quantity)
+                var newStock = product.StockQuantity - item.Quantity;
+                if (newStock < 0)
                 {
-                    TempData["ErrorMessage"] = $"Insufficient stock for product: {product.Name} (available: {product.StockQuantity}, requested: {item.Quantity})";
-                    return RedirectToAction(nameof(Details), new { id });
+                     TempData["ErrorMessage"] = $"Insufficient stock for {product.Name}. Available: {product.StockQuantity}, requested: {item.Quantity}.";
+                     return RedirectToAction(nameof(Details), new { id });
                 }
-                product.StockQuantity -= item.Quantity;
-                await _productRepo.UpdateAsync(product);
+
+                 product.StockQuantity = newStock;
+
+                 // Pass reason with order ID
+                 await _productRepo.UpdateAsync(product, $"Order #{order.Id} approved - {item.Quantity} units removed");
             }
         }
 
         order.Status = "Approved";
         order.UpdatedAt = DateTime.UtcNow;
         await _orderRepo.UpdateAsync(order);
-        Console.WriteLine($"✅ Order approved and stock deducted: ID {id}");
+
+       // Fire confetti via SignalR? Already handled in view.
+
         return RedirectToAction(nameof(Details), new { id });
     }
+    
+
 
     // POST: /Order/Reject/5
     [HttpPost]
@@ -237,9 +259,9 @@ public class OrderController : BaseController
         var order = await _orderRepo.GetByIdAsync(id);
         if (order == null) return NotFound();
 
-        if (order.Status == "Approved")
+        if (order.Status != "Approved")
         {
-            TempData["ErrorMessage"] = "Approved orders cannot be deleted.";
+            TempData["ErrorMessage"] = "Only pending orders can be deleted.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -260,16 +282,16 @@ public class OrderController : BaseController
         var order = await _orderRepo.GetByIdAsync(id);
         if (order == null) return NotFound();
 
-        if (order.Status == "Approved")
+        if (order.Status != "Pending")
         {
-            TempData["ErrorMessage"] = "Approved orders cannot be deleted.";
-            return RedirectToAction(nameof(Details), new { id });
+            TempData["ErrorMessage"] = "Only pending orders can be deleted.";
+            return RedirectToAction(nameof(Index));
         }
 
         await _orderRepo.DeleteAsync(id);
-        Console.WriteLine($"🗑️ Order deleted: ID {id}");
         return RedirectToAction(nameof(Index));
     }
+
 
     // GET: /Order/DownloadInvoice/5
     public async Task<IActionResult> DownloadInvoice(int id)

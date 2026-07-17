@@ -1,0 +1,53 @@
+@model inventory_dashboard.Models.Product
+@{
+    ViewData["Title"] = $"Stock History - {Model.Name}";
+    var histories = ViewBag.Histories as IEnumerable<inventory_dashboard.Models.StockHistory> ?? new List<inventory_dashboard.Models.StockHistory>();
+}
+
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h2>📜 Stock History for <span style="color: var(--primary);">@Model.Name</span></h2>
+        <a href="/Product/Details/@Model.Id" class="btn-secondary">🔙 Back to Details</a>
+    </div>
+
+    @if (!histories.Any())
+    {
+        <div class="card text-center" style="padding: 3rem;">
+            <p style="color: var(--muted-foreground);">No stock changes recorded for this product.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Previous Stock</th>
+                        <th>New Stock</th>
+                        <th>Change</th>
+                        <th>Reason</th>
+                        <th>Changed By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var h in histories)
+                    {
+                        var change = h.NewStock - h.PreviousStock;
+                        var isIncrease = change > 0;
+                        <tr>
+                            <td>@h.ChangedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@h.PreviousStock</td>
+                            <td>@h.NewStock</td>
+                            <td style="color: @(isIncrease ? "#2A9D8F" : "#EF4444");">
+                                @(isIncrease ? "+" : "")@change
+                            </td>
+                            <td>@h.Reason</td>
+                            <td>@h.ChangedBy</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

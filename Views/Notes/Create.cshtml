@@ -1,0 +1,64 @@
+@model inventory_dashboard.Models.Note
+@{
+    ViewData["Title"] = "Add Note";
+    var productId = ViewBag.ProductId as int?;
+}
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <a href="/Notes" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block;">← Back to Journal</a>
+    <h2>✏️ Add New Note</h2>
+
+    <div class="card" style="margin-top: 1.5rem;">
+        <form asp-action="Create">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label asp-for="Title">Title</label>
+                <input asp-for="Title" class="form-control" placeholder="e.g. Milk Batch Expired" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Category">Category</label>
+                <select asp-for="Category" class="form-control">
+                    <option value="General">📝 General</option>
+                    <option value="Expiry">⏳ Expiry</option>
+                    <option value="Quality">🔍 Quality</option>
+                    <option value="Restock">📦 Restock</option>
+                    <option value="Supplier">🏷️ Supplier</option>
+                </select>
+                <span asp-validation-for="Category" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ProductId">Related Product (optional)</label>
+                <select asp-for="ProductId" class="form-control" asp-items="ViewBag.ProductList">
+                    <option value="">-- None --</option>
+                </select>
+                <span asp-validation-for="ProductId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Content">Content</label>
+                <textarea asp-for="Content" class="form-control" rows="4" placeholder="Detailed notes..."></textarea>
+                <span asp-validation-for="Content" class="text-danger"></span>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                <input asp-for="IsCompleted" type="checkbox" style="width: 1.2rem; height: 1.2rem;" />
+                <label asp-for="IsCompleted" style="margin: 0; text-transform: none; font-weight: normal; color: var(--foreground);">
+                    Mark as Completed / Resolved
+                </label>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn-primary">Save Note</button>
+                <a href="/Notes" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

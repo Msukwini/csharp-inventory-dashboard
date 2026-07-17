@@ -1,0 +1,81 @@
+/* ============================================
+   FINAL DESIGN FIX – LIGHT/DARK MODE
+   ============================================ */
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
+/* Variables */
+:root {
+  --bg: #0B1A2E;
+  --fg: #F8F6F0;
+  --card-bg: #132B44;
+  --card-fg: #F8F6F0;
+  --primary: #D4A373;
+  --primary-fg: #0B1A2E;
+  --muted: #1a3550;
+  --muted-fg: #A0B4C8;
+  --border: rgba(255,255,255,0.15);
+  --input-bg: rgba(255,255,255,0.08);
+  --radius: 10px;
+}
+
+/* Light Mode */
+body.light-mode {
+  --bg: #F8F6F0;
+  --fg: #111827;
+  --card-bg: #FFFFFF;
+  --card-fg: #111827;
+  --muted: #E5E7EB;
+  --muted-fg: #4B5563;
+  --border: #D1D5DB;
+  --input-bg: #F9FAFB;
+}
+
+/* Base */
+body {
+  background: var(--bg);
+  color: var(--fg) !important;
+  font-family: var(--font-body);
+}
+
+/* Tables */
+table, th, td, .table-container {
+  color: var(--fg) !important;
+}
+td { color: var(--fg) !important; }
+
+/* Forms & Inputs */
+.form-control, input, select, textarea {
+  background: var(--input-bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
+}
+.form-control::placeholder { color: var(--muted-fg) !important; }
+
+/* Buttons */
+.btn-primary, .btn, button {
+  background: var(--primary) !important;
+  color: var(--primary-fg) !important;
+}
+.btn-secondary, [type="button"] {
+  color: var(--fg) !important;
+  border-color: var(--border) !important;
+}
+
+/* Create Order specific */
+.card, .table-container, section, .form-group {
+  background: var(--card-bg) !important;
+  color: var(--card-fg) !important;
+  border-color: var(--border) !important;
+}
+
+/* Navbar & Header */
+.navbar-custom, .login-container, .login-card {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+}
+
+/* Utility */
+a { color: var(--primary) !important; }
+h1, h2, h3, label { color: var(--fg) !important; }

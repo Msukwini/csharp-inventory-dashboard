@@ -1,0 +1,95 @@
+@model IEnumerable<inventory_dashboard.Models.Note>
+@{
+    ViewData["Title"] = "Notes Journal";
+}
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2>📓 Notes Journal</h2>
+        <p class="text-muted-foreground" style="font-size: 0.9rem;">Log expiries, quality issues, and internal reminders.</p>
+    </div>
+    <a href="/Notes/Create" class="btn-primary">+ Add Note</a>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-6">
+    <form method="get" class="grid grid-cols-3 gap-4 items-end">
+        <div class="form-group">
+            <label>Category</label>
+            <select name="category" class="form-control" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                <option value="Expiry" selected="@(ViewBag.CurrentCategory == "Expiry")">⏳ Expiry</option>
+                <option value="Quality" selected="@(ViewBag.CurrentCategory == "Quality")">🔍 Quality</option>
+                <option value="Restock" selected="@(ViewBag.CurrentCategory == "Restock")">📦 Restock</option>
+                <option value="Supplier" selected="@(ViewBag.CurrentCategory == "Supplier")">🏷️ Supplier</option>
+                <option value="General" selected="@(ViewBag.CurrentCategory == "General")">📝 General</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Status</label>
+            <select name="completed" class="form-control" onchange="this.form.submit()">
+                <option value="">All</option>
+                <option value="false" selected="@(ViewBag.CurrentCompleted == false)">Active</option>
+                <option value="true" selected="@(ViewBag.CurrentCompleted == true)">Completed/Resolved</option>
+            </select>
+        </div>
+        <div class="flex items-end gap-2">
+            <a href="/Notes" class="btn-secondary">Clear Filters</a>
+        </div>
+    </form>
+</div>
+
+<!-- Notes Grid -->
+@if (!Model.Any())
+{
+    <div class="card text-center" style="padding: 3rem;">
+        <p style="color: var(--muted-foreground);">No notes yet. <a href="/Notes/Create">Create your first note</a>.</p>
+    </div>
+}
+else
+{
+    <div class="grid grid-cols-2 gap-6">
+        @foreach (var note in Model)
+        {
+            <div class="card" style="border-left: 4px solid @(note.Category == "Expiry" ? "#EF4444" : note.Category == "Quality" ? "#F59E0B" : note.Category == "Restock" ? "#3B82F6" : "#D4A373");">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="badge" style="background: var(--primary); color: var(--primary-fg); font-size: 0.6rem; margin-bottom: 0.25rem; display: inline-block;">
+                            @note.Category
+                        </span>
+                        <h4 style="margin: 0.25rem 0 0.1rem;">@note.Title</h4>
+                    </div>
+                    @if (note.IsCompleted)
+                    {
+                        <span class="badge badge-approved" style="background: #2A9D8F;">✅ Resolved</span>
+                    }
+                    else
+                    {
+                        <span class="badge" style="background: var(--primary); color: var(--primary-fg);">⏳ Active</span>
+                    }
+                </div>
+
+                <p style="color: var(--muted-foreground); font-size: 0.9rem; margin: 0.5rem 0;">
+                    @note.Content
+                </p>
+
+                @if (note.Product != null)
+                {
+                    <p style="font-size: 0.8rem; color: var(--muted-foreground);">
+                        📦 Related: <a href="/Product/Details/@note.ProductId">@note.Product.Name</a>
+                    </p>
+                }
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+                    <span style="font-size: 0.7rem; color: var(--muted-foreground);">
+                        @note.CreatedBy · @note.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                    </span>
+                    <div class="flex gap-2">
+                        <a href="/Notes/Edit/@note.Id" style="font-size: 0.8rem; color: var(--muted-foreground);">✏️ Edit</a>
+                        <a href="/Notes/Delete/@note.Id" style="font-size: 0.8rem; color: var(--destructive);">🗑️ Delete</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

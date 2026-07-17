@@ -1,0 +1,51 @@
+@model IEnumerable<inventory_dashboard.Models.AuditLog>
+@{
+    ViewData["Title"] = "Audit Log";
+}
+
+<div class="flex justify-between items-center mb-6">
+    <h2>📜 Audit Log</h2>
+    <a href="/AuditLog/ExportCsv" class="btn-secondary">📤 Export CSV</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card text-center" style="padding: 3rem;">
+        <p style="color: var(--muted-foreground);">No logs yet.</p>
+    </div>
+}
+else
+{
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@log.User</td>
+                        <td>
+                            <span class="badge 
+                                @(log.Action.Contains("Created") ? "badge-approved" : 
+                                  log.Action.Contains("Deleted") ? "badge-rejected" : 
+                                  "badge-pending")">
+                                @log.Action
+                            </span>
+                        </td>
+                        <td>@log.EntityType @(log.EntityId.HasValue ? $"#{log.EntityId}" : "")</td>
+                        <td style="max-width: 300px; word-wrap: break-word;">@log.Details</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

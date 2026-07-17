@@ -29,8 +29,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Dependency Injection (Factory Pattern)
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<INoteRepository, NoteRepository>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<PdfService>();
+
+// Add HttpContextAccessor for audit trail (to get current user)
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 // SignalR for real-time alerts
 builder.Services.AddSignalR();
@@ -48,7 +54,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseSession(); // <-- Add this line
+app.UseSession();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -79,14 +85,7 @@ using (var scope = app.Services.CreateScope())
     if (!dbContext.Products.Any())
     {
         dbContext.Products.AddRange(
-            new Product { Name = "Arabica Blend Coffee", Description = "Premium single-origin Ethiopian blend", Price = 185.00m, StockQuantity = 42, SKU = "BEV-001", Category = "Beverages" },
-            new Product { Name = "Sourdough Loaf", Description = "Freshly baked 48-hour fermented sourdough", Price = 65.00m, StockQuantity = 8, SKU = "BAK-001", Category = "Bakery" },
-            new Product { Name = "Almond Croissant", Description = "Buttery layers with almond cream filling", Price = 45.00m, StockQuantity = 5, SKU = "BAK-002", Category = "Bakery" },
-            new Product { Name = "Cold Brew Concentrate", Description = "12-hour slow-dripped concentrate, 500ml", Price = 120.00m, StockQuantity = 23, SKU = "BEV-002", Category = "Beverages" },
-            new Product { Name = "Chai Spice Blend", Description = "House-blended masala chai spice mix", Price = 95.00m, StockQuantity = 3, SKU = "BEV-003", Category = "Beverages" },
-            new Product { Name = "Avocado Toast Kit", Description = "2 portions: sourdough + smashed avo + seeds", Price = 89.00m, StockQuantity = 15, SKU = "FOD-001", Category = "Food" },
-            new Product { Name = "Oat Milk (1L)", Description = "Barista-grade oat milk for steaming", Price = 55.00m, StockQuantity = 9, SKU = "DAR-001", Category = "Dairy Alt" },
-            new Product { Name = "Granola Pot", Description = "House granola with yoghurt and berries", Price = 72.00m, StockQuantity = 30, SKU = "FOD-002", Category = "Food" }
+            new Product { Name = " oGqwe", Description = "amakhekhe", Price = 1.00m, StockQuantity = 42, SKU = "BEV-001", Category = "Cakes" }
         );
         dbContext.SaveChanges();
         Console.WriteLine("✅ Products seeded.");
@@ -95,47 +94,13 @@ using (var scope = app.Services.CreateScope())
     if (!dbContext.Orders.Any())
     {
         var coffee = dbContext.Products.First(p => p.SKU == "BEV-001");
-        var coldBrew = dbContext.Products.First(p => p.SKU == "BEV-002");
-        var chai = dbContext.Products.First(p => p.SKU == "BEV-003");
-        var toast = dbContext.Products.First(p => p.SKU == "FOD-001");
-        var granola = dbContext.Products.First(p => p.SKU == "FOD-002");
         var today = DateTime.UtcNow.Date;
 
         dbContext.Orders.AddRange(
-            new Order {
-                CustomerId = 42, Status = "Approved", TotalAmount = 795.00m,
-                OrderDate = today.AddDays(-3), CreatedAt = today.AddDays(-3),
-                OrderItems = new List<OrderItem> {
-                    new OrderItem { ProductId = coffee.Id, Quantity = 3, Price = coffee.Price },
-                    new OrderItem { ProductId = coldBrew.Id, Quantity = 2, Price = coldBrew.Price }
-                }
-            },
-            new Order {
-                CustomerId = 17, Status = "Pending", TotalAmount = 685.00m,
-                OrderDate = today.AddDays(-2), CreatedAt = today.AddDays(-2),
-                OrderItems = new List<OrderItem> {
-                    new OrderItem { ProductId = coldBrew.Id, Quantity = 2, Price = coldBrew.Price },
-                    new OrderItem { ProductId = toast.Id, Quantity = 5, Price = toast.Price }
-                }
-            },
-            new Order {
-                CustomerId = 89, Status = "Rejected", TotalAmount = 950.00m,
-                OrderDate = today.AddDays(-2), CreatedAt = today.AddDays(-2),
-                OrderItems = new List<OrderItem> {
-                    new OrderItem { ProductId = chai.Id, Quantity = 10, Price = chai.Price }
-                }
-            },
-            new Order {
-                CustomerId = 33, Status = "Pending", TotalAmount = 788.00m,
-                OrderDate = today.AddDays(-1), CreatedAt = today.AddDays(-1),
-                OrderItems = new List<OrderItem> {
-                    new OrderItem { ProductId = granola.Id, Quantity = 6, Price = granola.Price },
-                    new OrderItem { ProductId = toast.Id, Quantity = 4, Price = toast.Price }
-                }
-            }
+            
         );
         dbContext.SaveChanges();
-        Console.WriteLine("✅ Orders seeded (ORD-001 to ORD-004).");
+        Console.WriteLine("There are no Current Odders");
     }
 }
 
