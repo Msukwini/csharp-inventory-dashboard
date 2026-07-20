@@ -1,17 +1,21 @@
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
-namespace inventory_dashboard.Models;
-
-public class OrderItem : BaseEntity
+namespace inventory_dashboard.Models
 {
-    public int OrderId { get; set; }
-    public int ProductId { get; set; }
-    public int Quantity { get; set; }
-    public decimal Price { get; set; }
+    public class OrderItem
+    {
+        public int Id { get; set; }
+        public int OrderId { get; set; }
+        public int ProductId { get; set; }
 
-    [ForeignKey(nameof(OrderId))]
-    public virtual Order Order { get; set; } = null!;
+        [Required]
+        public int Quantity { get; set; }
 
-    [ForeignKey(nameof(ProductId))]
-    public virtual Product Product { get; set; } = null!;
+        [Required]
+        public decimal Price { get; set; }
+
+        // Navigation properties – nullable
+        public virtual Order? Order { get; set; }
+        public virtual Product? Product { get; set; }
+    }
 }
