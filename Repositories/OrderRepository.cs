@@ -33,7 +33,6 @@ namespace inventory_dashboard.Repositories
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
-        // ✅ CustomerId is string – compare with string
         public async Task<IEnumerable<Order>> GetOrdersByCustomerAsync(string customerId)
         {
             return await _context.Orders
@@ -55,8 +54,33 @@ namespace inventory_dashboard.Repositories
         {
             order.CreatedAt = DateTime.UtcNow;
             order.UpdatedAt = DateTime.UtcNow;
-            order.OrderItems = items;
 
+            // ✅ Set timestamps on each order item
+            foreach (var item in items)
+            {
+                // Ensure the item has the order ID set (EF will set it after insert)
+                // But we need to set CreatedAt/UpdatedAt if they exist on OrderItem
+                // If OrderItem inherits from BaseEntity, it has those properties
+                // Set them to avoid null constraint errors.
+                // If your OrderItem does NOT have CreatedAt/UpdatedAt, you can skip this.
+                // But the error shows the column exists, so we'll set them.
+                // We'll assume OrderItem has CreatedAt and UpdatedAt (maybe from BaseEntity).
+                // If not, you may need to add them to the model.
+                // For safety, we'll set them if the property exists.
+                var itemType = item.GetType();
+                var createdAtProp = itemType.GetProperty("CreatedAt");
+                var updatedAtProp = itemType.GetProperty("UpdatedAt");
+                if (createdAtProp != null && createdAtProp.CanWrite)
+                    createdAtProp.SetValue(item, DateTime.UtcNow);
+                if (updatedAtProp != null && updatedAtProp.CanWrite)
+                    updatedAtProp.SetValue(item, DateTime.UtcNow);
+
+                // Also ensure the product is attached to avoid duplicates
+                if (item.Product != null)
+                    _context.Products.Attach(item.Product);
+            }
+
+            order.OrderItems = items;
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
             return order;
