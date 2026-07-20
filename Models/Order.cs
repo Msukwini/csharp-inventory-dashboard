@@ -6,8 +6,8 @@ namespace inventory_dashboard.Models
 {
     public class Order : BaseEntity
     {
-        [Required]
-        public int CustomerId { get; set; }
+        [Required(ErrorMessage = "Customer ID is required.")]
+        public string CustomerId { get; set; } = string.Empty;   // ✅ string, not int
 
         [Required]
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
@@ -21,8 +21,7 @@ namespace inventory_dashboard.Models
         public string? Notes { get; set; }
         public string? PurchaseRequestNotes { get; set; }
 
-        // Navigation properties – nullable to avoid validation errors
-        public virtual Customer? Customer { get; set; }
+        // No navigation property – no foreign key
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 }

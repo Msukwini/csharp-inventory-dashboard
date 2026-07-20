@@ -53,20 +53,7 @@ namespace inventory_dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Order order, List<OrderItem> items, string? otherProductName, int? otherProductQuantity, decimal? otherProductPrice)
         {
-            // --- Step 1: Validate CustomerId exists ---
-            if (order.CustomerId <= 0)
-            {
-                ModelState.AddModelError("CustomerId", "Please enter a valid Customer ID.");
-            }
-            else
-            {
-                var customerExists = await _context.Customers.AnyAsync(c => c.Id == order.CustomerId);
-                if (!customerExists)
-                {
-                    ModelState.AddModelError("CustomerId", $"Customer ID {order.CustomerId} does not exist. Please use the ID assigned to you.");
-                }
-            }
-
+            
             // --- Step 2: Check model state (this includes the CustomerId validation) ---
             if (!ModelState.IsValid)
             {
