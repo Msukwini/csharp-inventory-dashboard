@@ -1,9 +1,8 @@
 using inventory_dashboard.Models;
 using inventory_dashboard.Repositories;
+using inventory_dashboard.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace inventory_dashboard.Controllers
@@ -12,11 +11,13 @@ namespace inventory_dashboard.Controllers
     {
         private readonly INoteRepository _noteRepo;
         private readonly IProductRepository _productRepo;
+        private readonly IAuditService _auditService;
 
-        public NotesController(INoteRepository noteRepo, IProductRepository productRepo)
+        public NotesController(INoteRepository noteRepo, IProductRepository productRepo, IAuditService auditService)
         {
             _noteRepo = noteRepo;
             _productRepo = productRepo;
+            _auditService = auditService;
         }
 
         // GET: Notes
@@ -32,7 +33,6 @@ namespace inventory_dashboard.Controllers
             ViewBag.CurrentCategory = category;
             ViewBag.CurrentCompleted = completed;
 
-            // ✅ Always return a view – this line was missing in your version
             return View(notes);
         }
 
@@ -48,10 +48,8 @@ namespace inventory_dashboard.Controllers
         public async Task<IActionResult> Create(int? productId)
         {
             ViewBag.ProductId = productId;
-
             var products = await _productRepo.GetAllAsync();
             ViewBag.ProductList = new SelectList(products, "Id", "Name");
-
             return View();
         }
 
@@ -66,10 +64,10 @@ namespace inventory_dashboard.Controllers
             if (ModelState.IsValid)
             {
                 await _noteRepo.AddAsync(note);
+                await _auditService.LogAsync("Note Created", "Note", note.Id, $"Title: {note.Title}, Category: {note.Category}");
                 return RedirectToAction(nameof(Index));
             }
 
-            // If validation fails, re‑populate the dropdown
             var products = await _productRepo.GetAllAsync();
             ViewBag.ProductList = new SelectList(products, "Id", "Name");
             return View(note);
@@ -83,7 +81,6 @@ namespace inventory_dashboard.Controllers
 
             var products = await _productRepo.GetAllAsync();
             ViewBag.ProductList = new SelectList(products, "Id", "Name", note.ProductId);
-
             return View(note);
         }
 
@@ -97,10 +94,10 @@ namespace inventory_dashboard.Controllers
             if (ModelState.IsValid)
             {
                 await _noteRepo.UpdateAsync(note);
+                await _auditService.LogAsync("Note Updated", "Note", note.Id, $"Title: {note.Title}, Category: {note.Category}");
                 return RedirectToAction(nameof(Index));
             }
 
-            // Re‑populate dropdown on error
             var products = await _productRepo.GetAllAsync();
             ViewBag.ProductList = new SelectList(products, "Id", "Name", note.ProductId);
             return View(note);
@@ -119,7 +116,15 @@ namespace inventory_dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var note = await _noteRepo.GetByIdAsync(id);
+            if (note == null) return NotFound();
+
+            // Log before soft delete so we capture the title
+            await _auditService.LogAsync("Note Deleted", "Note", note.Id, $"Title: {note.Title}, Category: {note.Category}");
+
+            // Soft delete
             await _noteRepo.DeleteAsync(id);
+
             return RedirectToAction(nameof(Index));
         }
     }

@@ -20,6 +20,7 @@ namespace inventory_dashboard.Repositories
         {
             return await _context.Notes
                 .Include(n => n.Product)
+                .Where(n => !n.IsDeleted)     // <-- Exclude soft‑deleted
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
@@ -56,7 +57,7 @@ namespace inventory_dashboard.Repositories
             var note = await _context.Notes.FindAsync(id);
             if (note != null)
             {
-                _context.Notes.Remove(note);
+                note.IsDeleted = true;             // Soft delete
                 await _context.SaveChangesAsync();
             }
         }
