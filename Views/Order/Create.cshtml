@@ -11,13 +11,16 @@
     <form asp-action="Create" id="orderForm" method="post">
         @Html.AntiForgeryToken()
 
-        <!-- ======== VALIDATION SUMMARY ======== -->
+        <!-- Validation Summary -->
         <div asp-validation-summary="All" class="text-danger" style="margin-bottom: 1rem; padding: 0.75rem; border: 1px solid #EF4444; border-radius: 8px; background: rgba(239,68,68,0.08);"></div>
 
         <div class="card" style="margin-bottom: 1.5rem;">
             <h3 style="font-family: var(--font-body); font-weight: 600; font-size: 1rem; margin-bottom: 0.75rem;">Order Details</h3>
-            <!-- Hidden CustomerId – auto-set to 1 -->
-            <input type="hidden" asp-for="CustomerId" value="1" />
+            <div class="form-group">
+                <label asp-for="CustomerId">Your Customer ID</label>
+                <input asp-for="CustomerId" class="form-control" type="number" placeholder="Enter your assigned Customer ID" required />
+                <span asp-validation-for="CustomerId" class="text-danger"></span>
+            </div>
             <div class="form-group">
                 <label asp-for="Notes">Notes</label>
                 <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Special instructions..."></textarea>

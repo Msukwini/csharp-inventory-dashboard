@@ -53,20 +53,23 @@ namespace inventory_dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Order order, List<OrderItem> items, string? otherProductName, int? otherProductQuantity, decimal? otherProductPrice)
         {
-            // --- Auto-set CustomerId if missing ---
+            // --- Step 1: Validate CustomerId exists ---
             if (order.CustomerId <= 0)
             {
-                var firstCustomer = await _context.Customers.FirstOrDefaultAsync();
-                if (firstCustomer != null)
-                    order.CustomerId = firstCustomer.Id;
-                else
-                    ModelState.AddModelError("CustomerId", "No customers found. Please add a customer first.");
+                ModelState.AddModelError("CustomerId", "Please enter a valid Customer ID.");
+            }
+            else
+            {
+                var customerExists = await _context.Customers.AnyAsync(c => c.Id == order.CustomerId);
+                if (!customerExists)
+                {
+                    ModelState.AddModelError("CustomerId", $"Customer ID {order.CustomerId} does not exist. Please use the ID assigned to you.");
+                }
             }
 
-            // --- Early validation ---
+            // --- Step 2: Check model state (this includes the CustomerId validation) ---
             if (!ModelState.IsValid)
             {
-                // Log errors for debugging
                 var errors = string.Join("; ", ModelState.Values
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage));
@@ -138,6 +141,7 @@ namespace inventory_dashboard.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ ERROR saving order: {ex.Message}");
+                Console.WriteLine($"❌ Inner exception: {ex.InnerException?.Message}");
                 ModelState.AddModelError("", $"Error saving order: {ex.Message}");
                 ViewBag.Products = await _productRepo.GetAllAsync();
                 return View(order);
