@@ -160,5 +160,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-Console.WriteLine("🚀 Inventory Dashboard running at http://0.0.0.0:5000");
-app.Run("http://0.0.0.0:5000");
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+Console.WriteLine($"🚀 Inventory Dashboard running on port {port}");
+app.Run($"http://0.0.0.0:{port}");
