@@ -1,23 +1,30 @@
 @model inventory_dashboard.Models.Product
-@{ ViewData["Title"] = "Delete Product"; }
-<div class="max-w-2xl mx-auto">
-    <h2 class="text-3xl font-bold text-red-600 mb-6">🗑️ Delete Product</h2>
-    <div class="card bg-red-50 border border-red-200">
-        <p class="text-lg text-gray-800 mb-4">Are you sure you want to delete this product?</p>
-        <dl class="grid grid-cols-2 gap-4">
-            <dt class="font-semibold">Name</dt>
-            <dd>@Model.Name</dd>
-            <dt class="font-semibold">SKU</dt>
-            <dd>@Model.SKU</dd>
-            <dt class="font-semibold">Price</dt>
-            <dd>R @Model.Price</dd>
-            <dt class="font-semibold">Stock</dt>
-            <dd>@Model.StockQuantity</dd>
-        </dl>
-        <form asp-action="Delete" class="mt-4">
+@{
+    ViewData["Title"] = "Delete Product";
+}
+
+<div style="max-width: 500px; margin: 0 auto;">
+    <a href="/Product" class="btn-secondary" style="margin-bottom: 1rem; display: inline-block;">← Back to Products</a>
+    <h2 style="color: var(--destructive);">🗑️ Delete Product</h2>
+
+    <div class="card" style="margin-top: 1rem; border-color: var(--destructive);">
+        <p style="color: var(--foreground); font-weight: 500;">Are you sure you want to delete this product?</p>
+        <p style="color: var(--muted-foreground); font-size: 0.9rem;">
+            <strong style="color: var(--foreground);">Name:</strong> @Model.Name<br />
+            <strong style="color: var(--foreground);">SKU:</strong> @Model.SKU<br />
+            <strong style="color: var(--foreground);">Price:</strong> R @Model.Price<br />
+            <strong style="color: var(--foreground);">Stock:</strong> @Model.StockQuantity<br />
+            <strong style="color: var(--foreground);">Category:</strong> @Model.Category
+        </p>
+        <p style="color: var(--muted-foreground); font-size: 0.85rem;">
+            This action will <strong>soft‑delete</strong> the product. It will be hidden but not permanently removed.
+        </p>
+
+        <form asp-action="Delete" method="post" class="mt-4">
+            @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
             <div class="flex gap-2">
-                <button type="submit" class="btn-danger">Delete</button>
+                <button type="submit" class="btn-danger">Yes, Delete</button>
                 <a href="/Product" class="btn-secondary">Cancel</a>
             </div>
         </form>

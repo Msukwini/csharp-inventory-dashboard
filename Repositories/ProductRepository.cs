@@ -22,12 +22,15 @@ namespace inventory_dashboard.Repositories
 
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            return await _context.Products.ToListAsync();
+            return await _context.Products
+                .Where(p => !p.IsDeleted)
+                .ToListAsync();
         }
 
         public async Task<Product?> GetByIdAsync(int id)
         {
-            return await _context.Products.FindAsync(id);
+            return await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
         }
 
         public async Task AddAsync(Product product)
@@ -66,12 +69,14 @@ namespace inventory_dashboard.Repositories
             await _context.SaveChangesAsync();
         }
 
+        // Soft delete: mark as deleted instead of removing
         public async Task DeleteAsync(int id)
         {
             var product = await _context.Products.FindAsync(id);
             if (product != null)
             {
-                _context.Products.Remove(product);
+                product.IsDeleted = true;
+                product.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
         }
@@ -79,16 +84,17 @@ namespace inventory_dashboard.Repositories
         public async Task<IEnumerable<Product>> GetLowStockAsync(int threshold)
         {
             return await _context.Products
-                .Where(p => p.StockQuantity <= threshold)
+                .Where(p => p.StockQuantity <= threshold && !p.IsDeleted)
                 .ToListAsync();
         }
 
         public async Task<int> GetTotalCountAsync()
         {
-            return await _context.Products.CountAsync();
+            return await _context.Products
+                .Where(p => !p.IsDeleted)
+                .CountAsync();
         }
 
-        // ✅ NEW: Get stock history for a product
         public async Task<IEnumerable<StockHistory>> GetStockHistoryAsync(int productId)
         {
             return await _context.StockHistories
