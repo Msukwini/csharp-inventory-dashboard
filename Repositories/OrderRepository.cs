@@ -1,4 +1,5 @@
 using inventory_dashboard.Models;
+using inventory_dashboard.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -32,6 +33,16 @@ namespace inventory_dashboard.Repositories
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
+        // ✅ CustomerId is string – compare with string
+        public async Task<IEnumerable<Order>> GetOrdersByCustomerAsync(string customerId)
+        {
+            return await _context.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .Where(o => o.CustomerId == customerId)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(Order order)
         {
             order.CreatedAt = DateTime.UtcNow;
@@ -40,17 +51,15 @@ namespace inventory_dashboard.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task AddOrderWithItemsAsync(Order order, List<OrderItem> items, string purchaseRequestNotes)
+        public async Task<Order> AddOrderWithItemsAsync(Order order, List<OrderItem> items, string purchaseRequestNotes)
         {
             order.CreatedAt = DateTime.UtcNow;
             order.UpdatedAt = DateTime.UtcNow;
             order.OrderItems = items;
 
-            // ✅ REMOVE the assignments to CreatedAt/UpdatedAt – they don't exist on OrderItem
-            // foreach (var item in items) { item.CreatedAt = ...; } // <-- DELETE
-
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
+            return order;
         }
 
         public async Task UpdateAsync(Order order)

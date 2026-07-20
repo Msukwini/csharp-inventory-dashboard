@@ -53,8 +53,9 @@ namespace inventory_dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Order order, List<OrderItem> items, string? otherProductName, int? otherProductQuantity, decimal? otherProductPrice)
         {
-            
-            // --- Step 2: Check model state (this includes the CustomerId validation) ---
+            // ✅ CustomerId is string – validation is handled by [Required] in the model
+            // No extra validation
+
             if (!ModelState.IsValid)
             {
                 var errors = string.Join("; ", ModelState.Values

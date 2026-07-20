@@ -5,8 +5,10 @@
 
 <div class="flex justify-between items-center mb-6">
     <h2>📋 Orders</h2>
-    <a href="/Order/ExportCsv" class="btn-secondary">📤 Export</a>
-    <a href="/Order/Create" class="btn-primary">+ New Order</a>
+    <div class="flex gap-2">
+        <a href="/Order/ExportCsv" class="btn-secondary">📤 Export</a>
+        <a href="/Order/Create" class="btn-primary">+ New Order</a>
+    </div>
 </div>
 
 <div class="table-container">
@@ -14,8 +16,8 @@
         <thead>
             <tr>
                 <th>Order ID</th>
+                <th>Customer ID</th>
                 <th>Date</th>
-                <th>Customer</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -26,8 +28,8 @@
             {
                 <tr>
                     <td>ORD-@order.Id.ToString("D3")</td>
+                    <td>@order.CustomerId</td>   <!-- CustomerId is string -->
                     <td>@order.OrderDate.ToString("yyyy-MM-dd")</td>
-                    <td>CUST-@order.CustomerId.ToString("D3")</td>
                     <td>R @order.TotalAmount.ToString("N2")</td>
                     <td>
                         <span class="badge @(order.Status == "Approved" ? "badge-approved" : order.Status == "Pending" ? "badge-pending" : "badge-rejected")">

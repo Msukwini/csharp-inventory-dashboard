@@ -9,6 +9,6 @@ public interface IOrderRepository
     Task AddAsync(Order order);
     Task UpdateAsync(Order order);
     Task DeleteAsync(int id);
-    Task<IEnumerable<Order>> GetOrdersByCustomerAsync(int customerId);
+    Task<IEnumerable<Order>> GetOrdersByCustomerAsync(string customerId);
     Task<Order> AddOrderWithItemsAsync(Order order, List<OrderItem> items, string purchaseNotes);
 }
