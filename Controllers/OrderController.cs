@@ -51,9 +51,14 @@ namespace inventory_dashboard.Controllers
         // POST: /Order/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Order order, List<OrderItem> items, string? otherProductName, int? otherProductQuantity, decimal? otherProductPrice)
+        public async Task<IActionResult> Create(
+            Order order,
+            List<OrderItem> items,
+            string? otherProductName,
+            string? otherProductQuantity,
+            string? otherProductPrice)
         {
-            // --- 🔍 LOG all model state errors to see which field is failing ---
+            // --- 🔍 Log model state errors for debugging ---
             foreach (var key in ModelState.Keys)
             {
                 var state = ModelState[key];
@@ -69,7 +74,15 @@ namespace inventory_dashboard.Controllers
                 order.CustomerId = "GUEST";
             }
 
-            // --- Validate again after setting default ---
+            // --- ✅ Parse purchase request fields (they come as strings) ---
+            int? parsedQuantity = null;
+            decimal? parsedPrice = null;
+            if (!string.IsNullOrWhiteSpace(otherProductQuantity) && int.TryParse(otherProductQuantity, out int qty))
+                parsedQuantity = qty;
+            if (!string.IsNullOrWhiteSpace(otherProductPrice) && decimal.TryParse(otherProductPrice, out decimal price))
+                parsedPrice = price;
+
+            // --- Validate after fallback ---
             if (!ModelState.IsValid)
             {
                 var errors = string.Join("; ", ModelState.Values
@@ -80,11 +93,10 @@ namespace inventory_dashboard.Controllers
                 return View(order);
             }
 
-            // --- The rest of your logic (unchanged) ---
             items ??= new List<OrderItem>();
 
             bool hasItems = items.Any(i => i.ProductId > 0 && i.Quantity > 0);
-            bool hasPurchaseRequest = !string.IsNullOrWhiteSpace(otherProductName) && otherProductQuantity.HasValue && otherProductQuantity > 0;
+            bool hasPurchaseRequest = !string.IsNullOrWhiteSpace(otherProductName) && parsedQuantity.HasValue && parsedQuantity > 0;
 
             if (!hasItems && !hasPurchaseRequest)
             {
@@ -117,9 +129,9 @@ namespace inventory_dashboard.Controllers
             string purchaseRequestText = "";
             if (hasPurchaseRequest)
             {
-                purchaseRequestText = $"{otherProductName} (Qty: {otherProductQuantity})";
-                if (otherProductPrice.HasValue && otherProductPrice.Value > 0)
-                    purchaseRequestText += $" Price: {otherProductPrice.Value:C}";
+                purchaseRequestText = $"{otherProductName} (Qty: {parsedQuantity})";
+                if (parsedPrice.HasValue && parsedPrice.Value > 0)
+                    purchaseRequestText += $" Price: {parsedPrice.Value:C}";
                 purchaseRequestText += " - Requested from supplier.";
                 order.PurchaseRequestNotes = purchaseRequestText;
             }
