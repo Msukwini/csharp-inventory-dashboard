@@ -53,9 +53,23 @@ namespace inventory_dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Order order, List<OrderItem> items, string? otherProductName, int? otherProductQuantity, decimal? otherProductPrice)
         {
-            // ✅ CustomerId is string – validation is handled by [Required] in the model
-            // No extra validation
+            // --- 🔍 LOG all model state errors to see which field is failing ---
+            foreach (var key in ModelState.Keys)
+            {
+                var state = ModelState[key];
+                if (state.Errors.Any())
+                {
+                    Console.WriteLine($"🔍 Key: {key}, Errors: {string.Join(", ", state.Errors.Select(e => e.ErrorMessage))}");
+                }
+            }
 
+            // --- 🛡️ Ensure CustomerId has a value (fallback to "GUEST") ---
+            if (string.IsNullOrWhiteSpace(order.CustomerId))
+            {
+                order.CustomerId = "GUEST";
+            }
+
+            // --- Validate again after setting default ---
             if (!ModelState.IsValid)
             {
                 var errors = string.Join("; ", ModelState.Values
@@ -66,6 +80,7 @@ namespace inventory_dashboard.Controllers
                 return View(order);
             }
 
+            // --- The rest of your logic (unchanged) ---
             items ??= new List<OrderItem>();
 
             bool hasItems = items.Any(i => i.ProductId > 0 && i.Quantity > 0);
