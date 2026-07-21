@@ -17,8 +17,8 @@
         <div class="card" style="margin-bottom: 1.5rem;">
             <h3 style="font-family: var(--font-body); font-weight: 600; font-size: 1rem; margin-bottom: 0.75rem;">Order Details</h3>
             <div class="form-group">
-                <label asp-for="CustomerId">Your Customer ID</label>
-                <input asp-for="CustomerId" class="form-control" type="number" placeholder="Enter your assigned Customer ID" required />
+                <label asp-for="CustomerId">Customer ID / Name</label>
+                <input asp-for="CustomerId" class="form-control" placeholder="Enter your Customer ID or Name" />
                 <span asp-validation-for="CustomerId" class="text-danger"></span>
             </div>
             <div class="form-group">
@@ -34,7 +34,7 @@
                     <div class="form-group">
                         <label>Product</label>
                         <select name="items[0].ProductId" class="form-control product-select">
-                            <option value="">-- Select --</option>
+                            <option value="0">-- Select --</option>   <!-- ✅ Changed value to 0 -->
                             @foreach (var p in products)
                             {
                                 <option value="@p.Id" data-price="@p.Price">@p.Name</option>
@@ -67,11 +67,11 @@
                 </div>
                 <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" id="otherProductQty" name="otherProductQuantity" class="form-control" placeholder="10" />
+                    <input type="text" id="otherProductQty" name="otherProductQuantity" class="form-control" placeholder="10" />   <!-- ✅ string input -->
                 </div>
                 <div class="form-group">
                     <label>Estimated Price</label>
-                    <input type="number" id="otherProductPrice" name="otherProductPrice" class="form-control" step="0.01" placeholder="25.00" />
+                    <input type="text" id="otherProductPrice" name="otherProductPrice" class="form-control" placeholder="25.00" />   <!-- ✅ string input -->
                 </div>
             </div>
         </div>
@@ -98,7 +98,7 @@
                 if (name) {
                     el.setAttribute('name', name.replace(/\[\d+\]/, `[${rowIndex}]`));
                 }
-                if (el.classList.contains('product-select')) el.value = '';
+                if (el.classList.contains('product-select')) el.value = '0';   // ✅ default to 0
                 if (el.classList.contains('qty')) el.value = 1;
                 if (el.classList.contains('price')) el.value = 0;
             });
